@@ -2,7 +2,7 @@
 
 declare -A BDND
 
-# 
+# All the excluding patterns one can think of come in here.
 EXCLUDE=(
 
     "*.svn"
