@@ -68,6 +68,7 @@ for ex in ${EXCLUDE[@]}
 do
     exdiff+=" -x $ex"
     exrsync+=" --exclude=$ex"
+    # Huehuehue, sex XD
 done
 
 # Make ${DESTDIR} if not exists
