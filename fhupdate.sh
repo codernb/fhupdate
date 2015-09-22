@@ -51,20 +51,6 @@ then
     exit
 fi
 
-# The copy function
-copy() {
-    fpat="Only in "${MNTDIR}
-    if [ -d ${2} ]
-    then
-        diffs=$(diff -qr ${exdiff} ${1} ${2} | grep "${fpat}")
-    fi
-    if [ "$diffs" != "" ] 
-    then
-        echo "${diffs//$fpat/$(printf "${blue}${bold}%-${space}s${normal}" "Copying:")}"
-        rsync -ru ${exrsync} ${1}/* ${2}
-    fi
-}
-
 # The mounting
 printf "${blue}${bold}%-${space}s${normal}%s\n" "Mounting..." ${MNTDIR}
 mount ${MNTDIR}
@@ -90,6 +76,20 @@ then
     printf "${blue}${bold}%-${space}s${normal}%s\n" "Creating" ${DESTDIR}
     mkdir ${DESTDIR}
 fi
+
+# The copy function
+copy() {
+    fpat="Only in "${MNTDIR}
+    if [ -d ${2} ]
+    then
+        diffs=$(diff -qr ${exdiff} ${1} ${2} | grep "${fpat}")
+    fi
+    if [ "$diffs" != "" ] 
+    then
+        echo "${diffs//$fpat/$(printf "${blue}${bold}%-${space}s${normal}" "Copying:")}"
+        rsync -ru ${exrsync} ${1}/* ${2}
+    fi
+}
 
 # Loop through ${BDND}s
 printf "\n${blue}${bold}%s${normal}\n" "Looking for stuff to copy..."
