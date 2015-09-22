@@ -42,8 +42,6 @@ do
     exdiff+=" -x $ex"
     exrsync+=" --exclude=$ex"
 done
-echo $exdiff
-echo $exrsync
 
 copy() {
     fpat="Only in "${MNTDIR}
