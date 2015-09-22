@@ -2,15 +2,20 @@
 
 declare -A BDND
 
-# Sadly only one pattern is supported by now. :(
-EXCLUDE="*.svn"
+# 
+EXCLUDE=(
 
-# Where the FH drive should be mountet.
-# Will be created if not exists.
+    "*.svn"
+    ".DS_Store"
+    
+)
+
+# Where the FH drive will be mountet.
 MNTDIR=/mnt/fhnwstud/
 
 # The target directory wherein all the dirs will be copied to.
-DSTDIR=~/AD/
+# Will be created if not exists.
+DESTDIR=~/ADS/
 
 # The base dirs and dirs.
 # To add multiple folders in the same basefolder add a new line with:
@@ -30,21 +35,45 @@ DIRS=(
     
 )
 
-mount ${MNTDIR}
+exdiff=""
+exrsync=""
+for ex in ${EXCLUDE[@]}
+do
+    exdiff+=" -x $ex"
+    exrsync+=" --exclude=$ex"
+done
+echo $exdiff
+echo $exrsync
 
+copy() {
+    fpat="Only in "${MNTDIR}
+    if [ -d ${2} ]
+    then
+        diffs=$(diff -qr ${exdiff} ${1} ${2} | grep "${fpat}")
+    fi
+    if [ "$diffs" != "" ] 
+    then
+        echo "${diffs//$fpat/Copying: }"
+    fi
+    rsync -ru ${exrsync} ${1}/* ${2}
+}
+
+echo "Mounting ${MNTDIR}..."
+mount ${MNTDIR}
+echo "Mounted ${MNTDIR}"
+
+if [ ! -d ${DESTDIR} ]
+then
+    echo "Creating ${DESTDIR}"
+    mkdir ${DESTDIR}
+fi
+
+echo "Looking for stuff to copy..."
 for basedir in ${!BDND[@]}
 do
     for dir in ${BDND[$basedir]}
     do
-        from=${MNTDIR}${basedir}${dir}
-        to=${DSTDIR}${dir}
-        fpat="Only in "${MNTDIR}
-        bla=$(diff -qr -x "${EXCLUDE}" ${from} ${to} | grep "${fpat}")
-        if [ "$bla" != "" ] 
-        then
-            echo "${bla//$fpat/Copying: }"
-        fi
-        rsync -ru --exclude=${EXCLUDE} ${from}/* ${to}
+        copy ${MNTDIR}${basedir}${dir} ${DESTDIR}${dir}
     done
 done
 
@@ -52,14 +81,10 @@ for dir in ${DIRS[@]}
 do
     from=${MNTDIR}${dir}
     di=$(basename ${from})
-    to=${DSTDIR}${di}
-    fpat="Only in "${MNTDIR}
-    bla=$(diff -qr -x "${EXCLUDE}" ${from} ${to} | grep "${fpat}")
-    if [ "$bla" != "" ] 
-    then
-        echo "${bla//$fpat/Copying: }"
-    fi
-    rsync -ru --exclude=${EXCLUDE} ${from}/* ${to}
+    copy ${from} ${DESTDIR}${di}
 done
 
+echo "Umounting ${MNTDIR}..."
 umount ${MNTDIR}
+echo "Umounted ${MNTDIR}"
+echo "Thank you! Copy again."
