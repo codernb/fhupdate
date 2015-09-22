@@ -35,14 +35,23 @@ DIRS=(
     
 )
 
-exdiff=""
-exrsync=""
-for ex in ${EXCLUDE[@]}
-do
-    exdiff+=" -x $ex"
-    exrsync+=" --exclude=$ex"
-done
+# -------------- Nothing to config from here onwards --------------
+#                (Except you know what you're doing)
 
+blue=$(tput setaf 4)
+green=$(tput setaf 2)
+bold=$(tput bold)
+normal=$(tput sgr0)
+space=17
+
+# Check if ${MNTDIR} exists
+if [ ! -d ${MNTDIR} ]
+then
+    printf "${blue}${bold}%-${space}s${normal}%s${green}${bold}%s${normal}%s\n" "Sorry..." "Unable to mount " ${MNTDIR} " since it doesn't exist."
+    exit
+fi
+
+# The copy function
 copy() {
     fpat="Only in "${MNTDIR}
     if [ -d ${2} ]
@@ -51,22 +60,39 @@ copy() {
     fi
     if [ "$diffs" != "" ] 
     then
-        echo "${diffs//$fpat/Copying: }"
+        echo "${diffs//$fpat/$(printf "${blue}${bold}%-${space}s${normal}" "Copying:")}"
+        rsync -ru ${exrsync} ${1}/* ${2}
     fi
-    rsync -ru ${exrsync} ${1}/* ${2}
 }
 
-echo "Mounting ${MNTDIR}..."
+# The mounting
+printf "${blue}${bold}%-${space}s${normal}%s\n" "Mounting..." ${MNTDIR}
 mount ${MNTDIR}
-echo "Mounted ${MNTDIR}"
+if [ ! "$(ls -A ${MNTDIR})" ]
+then
+    printf "${blue}${bold}%-${space}s${normal}%s${green}${bold}%s${normal}%s\n" "Sorry..." "Couldn't mount " ${MNTDIR} "."
+    exit
+fi
+printf "${blue}${bold}%-${space}s${normal}%s\n" "Mounted" ${MNTDIR}
 
+# Excluding builder
+exdiff=""
+exrsync=""
+for ex in ${EXCLUDE[@]}
+do
+    exdiff+=" -x $ex"
+    exrsync+=" --exclude=$ex"
+done
+
+# Make ${DESTDIR} if not exists
 if [ ! -d ${DESTDIR} ]
 then
-    echo "Creating ${DESTDIR}"
+    printf "${blue}${bold}%-${space}s${normal}%s\n" "Creating" ${DESTDIR}
     mkdir ${DESTDIR}
 fi
 
-echo "Looking for stuff to copy..."
+# Loop through ${BDND}s
+printf "\n${blue}${bold}%s${normal}\n" "Looking for stuff to copy..."
 for basedir in ${!BDND[@]}
 do
     for dir in ${BDND[$basedir]}
@@ -75,6 +101,7 @@ do
     done
 done
 
+# Loop through ${DIRS}
 for dir in ${DIRS[@]}
 do
     from=${MNTDIR}${dir}
@@ -82,7 +109,10 @@ do
     copy ${from} ${DESTDIR}${di}
 done
 
-echo "Umounting ${MNTDIR}..."
+# The umount
+printf "\n${blue}${bold}%-${space}s${normal}%s\n" "Umounting..." ${MNTDIR}
 umount ${MNTDIR}
-echo "Umounted ${MNTDIR}"
-echo "Thank you! Copy again."
+printf "${blue}${bold}%-${space}s${normal}%s\n" "Umounted" ${MNTDIR}
+
+# Say thank you :)
+printf "${blue}${bold}%-${space}s${normal}%s\n" "Thank you!" "Copy again."
