@@ -1,0 +1,65 @@
+#/bin/bash
+
+declare -A BDND
+
+# Sadly only one pattern is supported by now. :(
+EXCLUDE="*.svn"
+
+# Where the FH drive should be mountet.
+# Will be created if not exists.
+MNTDIR=/mnt/fhnwstud/
+
+# The target directory wherein all the dirs will be copied to.
+DSTDIR=~/AD/
+
+# The base dirs and dirs.
+# To add multiple folders in the same basefolder add a new line with:
+# ["relative/from/${MNTDIR}/to/basedir"]="dir1_in_basedir dir2_in_basedir dir3_in_basedir"
+BDND=(
+
+    ["E1862_Unterrichte_I/E1862_5Iv/"]="eaf apsi"
+    
+)
+
+# To add a folder directly without the obscure basedir-syntax-thingy.
+# But still relative to the ${MNTDIR}.
+DIRS=(
+
+    "E1862_Unterrichte_I/E1862_5iCa/esol"
+    "E1862_Unterrichte_I/E1862_5Id/dnead"
+    
+)
+
+mount ${MNTDIR}
+
+for basedir in ${!BDND[@]}
+do
+    for dir in ${BDND[$basedir]}
+    do
+        from=${MNTDIR}${basedir}${dir}
+        to=${DSTDIR}${dir}
+        fpat="Only in "${MNTDIR}
+        bla=$(diff -qr -x "${EXCLUDE}" ${from} ${to} | grep "${fpat}")
+        if [ "$bla" != "" ] 
+        then
+            echo "${bla//$fpat/Copying: }"
+        fi
+        rsync -ru --exclude=${EXCLUDE} ${from}/* ${to}
+    done
+done
+
+for dir in ${DIRS[@]}
+do
+    from=${MNTDIR}${dir}
+    di=$(basename ${from})
+    to=${DSTDIR}${di}
+    fpat="Only in "${MNTDIR}
+    bla=$(diff -qr -x "${EXCLUDE}" ${from} ${to} | grep "${fpat}")
+    if [ "$bla" != "" ] 
+    then
+        echo "${bla//$fpat/Copying: }"
+    fi
+    rsync -ru --exclude=${EXCLUDE} ${from}/* ${to}
+done
+
+umount ${MNTDIR}
