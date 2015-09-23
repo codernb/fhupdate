@@ -15,7 +15,7 @@ MNTDIR=/mnt/fhnwstud/
 
 # The target directory wherein all the dirs will be copied to.
 # Will be created if not exists.
-DESTDIR=~/ADS/
+DESTDIR=~/AD/
 
 # The base dirs and dirs.
 # To add multiple folders in the same basefolder add a new line with:
@@ -88,7 +88,7 @@ copy() {
     fpat="Only in "${MNTDIR}
     if [ -d "${2}" ]
     then
-        diffs=$(diff -qr "${exdiff}" "${1}" "${2}" | grep "${fpat}")
+        diffs=$(diff -qr ${exdiff} "${1}" "${2}" | grep "${fpat}")
         if [ "$diffs" != "" ] 
         then
             echo "${diffs//$fpat/$(printf "${blue}${bold}%-${space}s${normal}" "Copying:")}"
@@ -96,7 +96,7 @@ copy() {
     else
         printf "${blue}${bold}%-${space}s${normal}%s\n" "Initializing:" "${2}"
     fi
-    rsync -ru "${exrsync}" "${1}"/* "${2}"
+    rsync -ru ${exrsync} "${1}"/* "${2}"
 }
 
 # Loop through ${BDND}s
