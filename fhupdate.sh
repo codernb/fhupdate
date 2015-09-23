@@ -22,7 +22,7 @@ DESTDIR=~/ADS/
 # ["relative/from/${MNTDIR}/to/basedir"]="dir1_in_basedir dir2_in_basedir dir3_in_basedir"
 BDND=(
 
-    ["E1862_Unterrichte_I/E1862_5Iv/"]="eaf apsi"
+    ["E1862_Unterrichte_I/E1862_5Iv/"]="eaf faulty apsi"
     
 )
 
@@ -64,7 +64,7 @@ printf "${blue}${bold}%-${space}s${normal}%s\n" "Mounted" ${MNTDIR}
 # Excluding builder
 exdiff=""
 exrsync=""
-for ex in ${EXCLUDE[@]}
+for ex in "${EXCLUDE[@]}"
 do
     exdiff+=" -x $ex"
     exrsync+=" --exclude=$ex"
@@ -80,34 +80,41 @@ fi
 
 # The copy function
 copy() {
+    if [ ! -d "${1}" ]
+    then
+        printf "${blue}${bold}%-${space}s${normal}%s\n" "Does not exist:" "${1}"
+        return
+    fi
     fpat="Only in "${MNTDIR}
-    if [ -d ${2} ]
+    if [ -d "${2}" ]
     then
-        diffs=$(diff -qr ${exdiff} ${1} ${2} | grep "${fpat}")
+        diffs=$(diff -qr "${exdiff}" "${1}" "${2}" | grep "${fpat}")
+        if [ "$diffs" != "" ] 
+        then
+            echo "${diffs//$fpat/$(printf "${blue}${bold}%-${space}s${normal}" "Copying:")}"
+        fi
+    else
+        printf "${blue}${bold}%-${space}s${normal}%s\n" "Initializing:" "${2}"
     fi
-    if [ "$diffs" != "" ] 
-    then
-        echo "${diffs//$fpat/$(printf "${blue}${bold}%-${space}s${normal}" "Copying:")}"
-    fi
-    rsync -ru ${exrsync} ${1}/* ${2}
+    rsync -ru "${exrsync}" "${1}"/* "${2}"
 }
 
 # Loop through ${BDND}s
 printf "\n${blue}${bold}%s${normal}\n" "Looking for stuff to copy..."
-for basedir in ${!BDND[@]}
+for basedir in "${!BDND[@]}"
 do
     for dir in ${BDND[$basedir]}
     do
-        copy ${MNTDIR}${basedir}${dir} ${DESTDIR}${dir}
+        copy "${MNTDIR}""${basedir}""${dir}" "${DESTDIR}""${dir}"
     done
 done
 
 # Loop through ${DIRS}
-for dir in ${DIRS[@]}
+for dir in "${DIRS[@]}"
 do
     from=${MNTDIR}${dir}
-    di=$(basename ${from})
-    copy ${from} ${DESTDIR}${di}
+    di=$(basename "${from}")
+    copy "${from}" "${DESTDIR}""${di}"
 done
 
 # The umount
@@ -117,3 +124,4 @@ printf "${blue}${bold}%-${space}s${normal}%s\n" "Umounted" ${MNTDIR}
 
 # Say thank you :)
 printf "${blue}${bold}%-${space}s${normal}%s\n" "Thank you!" "Copy again."
+
