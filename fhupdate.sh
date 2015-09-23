@@ -88,8 +88,8 @@ copy() {
     if [ "$diffs" != "" ] 
     then
         echo "${diffs//$fpat/$(printf "${blue}${bold}%-${space}s${normal}" "Copying:")}"
-        rsync -ru ${exrsync} ${1}/* ${2}
     fi
+    rsync -ru ${exrsync} ${1}/* ${2}
 }
 
 # Loop through ${BDND}s
